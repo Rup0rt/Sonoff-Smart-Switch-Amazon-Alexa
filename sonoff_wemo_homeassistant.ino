@@ -71,16 +71,16 @@ void responseToSearchUdp(IPAddress& senderIP, unsigned int senderPort)
   Udp.write(ipChar);
   Udp.write(portChar);
   Udp.write("/setup.xml\r\n");
-  Udp.write("OPT: \"http://schemas.upnp.org/upnp/1/0/\"); ns=01\r\n");
+  Udp.write("OPT: \"http://schemas.upnp.org/upnp/1/0/\"; ns=01\r\n");
   Udp.write("01-NLS: ");
   Udp.write(uuid);
   Udp.write("\r\n");
   Udp.write("SERVER: Unspecified, UPnP/1.0, Unspecified\r\n");
   Udp.write("X-User-Agent: redsonic\r\n");
-  Udp.write("ST: upnp:rootdevice\r\n");
+  Udp.write("ST: urn:Belkin:device:**\r\n");
   Udp.write("USN: uuid:Socket-1_0-");
   Udp.write(serialNumber);
-  Udp.write("upnp:rootdevice\r\n");
+  Udp.write("::urn:Belkin:device:**\r\n");
   Udp.write("\r\n");
   Udp.endPacket();
 }
