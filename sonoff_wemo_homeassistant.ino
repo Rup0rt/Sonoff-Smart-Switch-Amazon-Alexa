@@ -8,8 +8,8 @@ const char* ssid = "YOUR_SSID";                       // your network SSID (name
 const char* pass = "YOUR_PASSWORD";                       // your network password
 
 String friendlyName = "emulated_wemo_1";           // Alexa and/or Home Assistant will use this name to identify your device
-const char* serialNumber = "221517K0101768";                  // anything will do
-const char* uuid = "904bfa3c-1de2-11v2-8728-fd8eebaf492d";    // anything will do
+const char* serialNumber = "221517K0101768";                  // anything will do (needed to change for multiple devices)
+const char* uuid = "904bfa3c-1de2-11v2-8728-fd8eebaf492d";    // anything will do (needed to change for multiple devices)
 
 // Multicast declarations for discovery
 IPAddress ipMulti(239, 255, 255, 250);
@@ -419,6 +419,7 @@ void setup()
 
 void loop(){
 
+  ESP.wdtFeed();
 
 if (digitalRead(SWITCH_PIN)){
   delay(250);
