@@ -1,15 +1,18 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <WiFiUDP.h>
+#include <FS.h>
 
-//Majority of code is from https://github.com/torinnguyen/ESP8266Wemo
+// https://github.com/aneisch/Sonoff-Wemo-Home-Assistant
 
-const char* ssid = "YOUR_SSID";                       // your network SSID (name)
-const char* pass = "YOUR_PASSWORD";                       // your network password
+//Majority of code is from a
 
-String friendlyName = "emulated_wemo_1";           // Alexa and/or Home Assistant will use this name to identify your device
-const char* serialNumber = "221517K0101768";                  // anything will do (needed to change for multiple devices)
-const char* uuid = "904bfa3c-1de2-11v2-8728-fd8eebaf492d";    // anything will do (needed to change for multiple devices)
+char ssid[256];                       // your network SSID (name)
+char pass[256];                       // your network password
+
+String friendlyName = "Sonoff_Switch";                        // Alexa and/or Home Assistant will use this name to identify your device
+const char* serialNumber = "321517K0201769";                  // anything will do
+const char* uuid = "914bfa3c-1de5-12v2-8728-fd8eebaf192d";    // anything will do
 
 // Multicast declarations for discovery
 IPAddress ipMulti(239, 255, 255, 250);
@@ -360,16 +363,81 @@ void handleNotFound()
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
 
+void setupMode() {
+  Serial.println("Entering SETUP mode...");
+  
+  // setup mode indicator
+  digitalWrite(LED_PIN, 0);
+  delay(500);
+  digitalWrite(LED_PIN, 1);
+  delay(500);
+  digitalWrite(LED_PIN, 0);
+  delay(500);
+  digitalWrite(LED_PIN, 1);
+  delay(500);
+
+  // format SPIFFS
+  SPIFFS.format();
+
+  // start WPS detection
+  digitalWrite(LED_PIN, 0);
+  Serial.println("Trying to get WPS network...");
+  WiFi.mode(WIFI_STA);
+  bool wpsSuccess = WiFi.beginWPSConfig();
+  digitalWrite(LED_PIN, 1);
+  if (WiFi.SSID().length() > 0) {
+    Serial.println("SUCCESS - writing data to SPIFFS...");
+
+    // write SSID file
+    File f = SPIFFS.open("/ssid.txt", "w+");
+    f.print(WiFi.SSID().c_str());
+    f.close();
+
+    // write password file
+    f = SPIFFS.open("/pass.txt", "w+");
+    f.print(WiFi.psk().c_str());
+    f.close();
+  } else {
+    Serial.println("FAILED...");
+  }
+
+  // reboot the ESP
+  Serial.println("Reseting device...");
+  ESP.restart();
+}
+
 void setup()
 {
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
+  delay(100);
   Serial.println();
 
   // Initialize LED pin
   pinMode(LED_PIN, OUTPUT);
   pinMode(RELAY_PIN, OUTPUT);
   pinMode(SWITCH_PIN, INPUT);
+
+  // Init file system
+  SPIFFS.begin();
+
+  // read SSID
+  if (SPIFFS.exists("/ssid.txt")) {
+    String tmp = "";
+    File f = SPIFFS.open("/ssid.txt", "r");
+    while (f.available()) tmp += char(f.read());
+    f.close();
+    tmp.toCharArray(ssid, 256);
+  } else setupMode();
+
+  // read PASSWORD
+  if (SPIFFS.exists("/pass.txt")) {
+    String tmp = "";
+    File f = SPIFFS.open("/pass.txt", "r");
+    while (f.available()) tmp += char(f.read());
+    f.close();
+    tmp.toCharArray(pass, 256);
+  } else setupMode();
 
   digitalWrite(LED_PIN, 1);
   digitalWrite(RELAY_PIN, 0);
@@ -384,11 +452,22 @@ void setup()
   Serial.print("]...");
   int tries=0;
   while (WiFi.status() != WL_CONNECTED) {
-    delay(200);
-    Serial.print(".");
+    // enter setup if button is pressed while connecting
+    if (digitalRead(SWITCH_PIN) == 0) setupMode();
+
+    // status indicator
+    digitalWrite(LED_PIN, 0);
+    delay(100);
+    digitalWrite(LED_PIN, 1);
+    delay(100);
+    Serial.print("+");
+
+    // check max connection tries - wait time
     tries++;
-    if (tries > 50)
+    if (tries > 50) {
+      digitalWrite(LED_PIN, 0);
       break;
+    }
   }
   
   // print your WiFi info
@@ -447,4 +526,3 @@ UdpMulticastServerLoop();   //UDP multicast receiver
 
 server.handleClient();      //Webserver
 }
-
