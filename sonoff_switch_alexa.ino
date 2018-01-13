@@ -47,16 +47,16 @@ ESP8266WebServer server(webserverPort);
 //-----------------------------------------------------------------------
 
 char* generateString(char *base, int length) {
-  char res[length+1];
+  char res[length + 1];
   int i;
 
-  for (i=0; i<length; i++) {
+  for (i = 0; i < length; i++) {
     res[i] = base[random(0, strlen(base))];
   }
-  
+
   res[length] = 0x00;
 
-  return(res);
+  return (res);
 }
 
 //-----------------------------------------------------------------------
@@ -70,7 +70,7 @@ char* getDateString()
   return "Wed, 29 Jun 2016 00:13:46 GMT";
 }
 
-void responseToSearchUdp(IPAddress& senderIP, unsigned int senderPort) 
+void responseToSearchUdp(IPAddress& senderIP, unsigned int senderPort)
 {
   Serial.println("responseToSearchUdp");
 
@@ -115,9 +115,9 @@ void UdpMulticastServerLoop()
 
   IPAddress senderIP = Udp.remoteIP();
   unsigned int senderPort = Udp.remotePort();
-  
+
   // read the packet into the buffer
-  Udp.read(packetBuffer, numBytes); 
+  Udp.read(packetBuffer, numBytes);
 
   // print out the received packet
   //Serial.write(packetBuffer, numBytes);
@@ -135,7 +135,7 @@ void UdpMulticastServerLoop()
 // HTTP Server
 //-----------------------------------------------------------------------
 
-void handleRoot() 
+void handleRoot()
 {
   Serial.println("handleRoot");
 
@@ -145,46 +145,46 @@ void handleRoot()
 void handleEventXml()
 {
   Serial.println("HandleEventXML");
-    
+
   String eventservice_xml = "<scpd xmlns=\"urn:Belkin:service-1-0\">"
-        "<actionList>"
-          "<action>"
-            "<name>SetBinaryState</name>"
-            "<argumentList>"
-              "<argument>"
-                "<retval/>"
-                "<name>BinaryState</name>"
-                "<relatedStateVariable>BinaryState</relatedStateVariable>"
-                "<direction>in</direction>"
-                "</argument>"
-            "</argumentList>"
-          "</action>"
-          "<action>"
-            "<name>GetBinaryState</name>"
-            "<argumentList>"
-              "<argument>"
-                "<retval/>"
-                "<name>BinaryState</name>"
-                "<relatedStateVariable>BinaryState</relatedStateVariable>"
-                "<direction>out</direction>"
-                "</argument>"
-            "</argumentList>"
-          "</action>"
-      "</actionList>"
-        "<serviceStateTable>"
-          "<stateVariable sendEvents=\"yes\">"
-            "<name>BinaryState</name>"
-            "<dataType>Boolean</dataType>"
-            "<defaultValue>0</defaultValue>"
-           "</stateVariable>"
-           "<stateVariable sendEvents=\"yes\">"
-              "<name>level</name>"
-              "<dataType>string</dataType>"
-              "<defaultValue>0</defaultValue>"
-           "</stateVariable>"
-        "</serviceStateTable>"
-        "</scpd>\r\n"
-        "\r\n";
+                            "<actionList>"
+                            "<action>"
+                            "<name>SetBinaryState</name>"
+                            "<argumentList>"
+                            "<argument>"
+                            "<retval/>"
+                            "<name>BinaryState</name>"
+                            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+                            "<direction>in</direction>"
+                            "</argument>"
+                            "</argumentList>"
+                            "</action>"
+                            "<action>"
+                            "<name>GetBinaryState</name>"
+                            "<argumentList>"
+                            "<argument>"
+                            "<retval/>"
+                            "<name>BinaryState</name>"
+                            "<relatedStateVariable>BinaryState</relatedStateVariable>"
+                            "<direction>out</direction>"
+                            "</argument>"
+                            "</argumentList>"
+                            "</action>"
+                            "</actionList>"
+                            "<serviceStateTable>"
+                            "<stateVariable sendEvents=\"yes\">"
+                            "<name>BinaryState</name>"
+                            "<dataType>Boolean</dataType>"
+                            "<defaultValue>0</defaultValue>"
+                            "</stateVariable>"
+                            "<stateVariable sendEvents=\"yes\">"
+                            "<name>level</name>"
+                            "<dataType>string</dataType>"
+                            "<defaultValue>0</defaultValue>"
+                            "</stateVariable>"
+                            "</serviceStateTable>"
+                            "</scpd>\r\n"
+                            "\r\n";
 
   String header = "HTTP/1.1 200 OK\r\n";
   header += "Content-Type: text/xml\r\n";
@@ -202,44 +202,44 @@ void handleEventXml()
   header += eventservice_xml;
 
   Serial.println(header);
-  
+
   server.sendContent(header);
 }
 
 void handleSetupXml()
 {
   Serial.println("handleSetupXml");
-    
-  String body = 
-  "<?xml version=\"1.0\"?>\r\n"
-  "<root xmlns=\"urn:Belkin:device-1-0\">\r\n"
-  "<specVersion>\r\n"
+
+  String body =
+    "<?xml version=\"1.0\"?>\r\n"
+    "<root xmlns=\"urn:Belkin:device-1-0\">\r\n"
+    "<specVersion>\r\n"
     "<major>1</major>\r\n"
     "<minor>0</minor>\r\n"
-        "</specVersion>\r\n"
-        "<device>\r\n"
-          "<deviceType>urn:Belkin:device:controllee:1</deviceType>\r\n"
-          "<friendlyName>" + String(friendlyName) + "</friendlyName>\r\n"
-              "<manufacturer>Belkin International Inc.</manufacturer>\r\n"
-              "<manufacturerURL>http://www.belkin.com</manufacturerURL>\r\n"
-              "<modelDescription>Belkin Plugin Socket 1.0</modelDescription>\r\n"
-              "<modelName>Socket</modelName>\r\n"
-              "<modelNumber>1.0</modelNumber>\r\n"
-              "<UDN>uuid:Socket-1_0-" + uuid + "</UDN>\r\n"
-              "<modelURL>http://www.belkin.com/plugin/</modelURL>\r\n"
-            "<serialNumber>" + serialNumber + "</serialNumber>\r\n"
-            "<serviceList>\r\n"
-              "<service>\r\n"
-                "<serviceType>urn:Belkin:service:basicevent:1</serviceType>\r\n"
-                "<serviceId>urn:Belkin:serviceId:basicevent1</serviceId>\r\n"
-                "<controlURL>/upnp/control/basicevent1</controlURL>\r\n"
-                "<eventSubURL>/upnp/event/basicevent1</eventSubURL>\r\n"
-                "<SCPDURL>/eventservice.xml</SCPDURL>\r\n"
-              "</service>\r\n"
-            "</serviceList>\r\n"
-          "</device>\r\n"
-        "</root>\r\n"
-        "\r\n";
+    "</specVersion>\r\n"
+    "<device>\r\n"
+    "<deviceType>urn:Belkin:device:controllee:1</deviceType>\r\n"
+    "<friendlyName>" + String(friendlyName) + "</friendlyName>\r\n"
+    "<manufacturer>Belkin International Inc.</manufacturer>\r\n"
+    "<manufacturerURL>http://www.belkin.com</manufacturerURL>\r\n"
+    "<modelDescription>Belkin Plugin Socket 1.0</modelDescription>\r\n"
+    "<modelName>Socket</modelName>\r\n"
+    "<modelNumber>1.0</modelNumber>\r\n"
+    "<UDN>uuid:Socket-1_0-" + uuid + "</UDN>\r\n"
+    "<modelURL>http://www.belkin.com/plugin/</modelURL>\r\n"
+    "<serialNumber>" + serialNumber + "</serialNumber>\r\n"
+    "<serviceList>\r\n"
+    "<service>\r\n"
+    "<serviceType>urn:Belkin:service:basicevent:1</serviceType>\r\n"
+    "<serviceId>urn:Belkin:serviceId:basicevent1</serviceId>\r\n"
+    "<controlURL>/upnp/control/basicevent1</controlURL>\r\n"
+    "<eventSubURL>/upnp/event/basicevent1</eventSubURL>\r\n"
+    "<SCPDURL>/eventservice.xml</SCPDURL>\r\n"
+    "</service>\r\n"
+    "</serviceList>\r\n"
+    "</device>\r\n"
+    "</root>\r\n"
+    "\r\n";
 
   String header = "HTTP/1.1 200 OK\r\n";
   header += "Content-Type: text/xml\r\n";
@@ -257,7 +257,7 @@ void handleSetupXml()
   header += body;
 
   Serial.println(header);
-  
+
   server.sendContent(header);
 }
 
@@ -286,84 +286,84 @@ void handleUpnpControl()
 
   //On/Off Logic
   if (isOn) {
-      digitalWrite(LED_PIN, 0);
-      digitalWrite(RELAY_PIN, 1);
-      Serial.println("Alexa is asking to turn ON a device");
-      String body = 
+    digitalWrite(LED_PIN, 0);
+    digitalWrite(RELAY_PIN, 1);
+    Serial.println("Alexa is asking to turn ON a device");
+    String body =
       "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>\r\n"
       "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">\r\n"
       "<BinaryState>1</BinaryState>\r\n"
       "</u:SetBinaryStateResponse>\r\n"
       "</s:Body> </s:Envelope>";
-      String header = "HTTP/1.1 200 OK\r\n";
-      header += "Content-Length: ";
-      header += body.length();
-      header += "\r\n";
-      header += "Content-Type: text/xml\r\n";
-      header += "Date: ";
-      header += getDateString();
-      header += "\r\n";
-      header += "EXT:\r\n";
-      header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
-      header += "X-User-Agent: redsonic\r\n";
-      header += "\r\n";
-      header += body;
-      server.sendContent(header);
+    String header = "HTTP/1.1 200 OK\r\n";
+    header += "Content-Length: ";
+    header += body.length();
+    header += "\r\n";
+    header += "Content-Type: text/xml\r\n";
+    header += "Date: ";
+    header += getDateString();
+    header += "\r\n";
+    header += "EXT:\r\n";
+    header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
+    header += "X-User-Agent: redsonic\r\n";
+    header += "\r\n";
+    header += body;
+    server.sendContent(header);
   }
   else if (isOff) {
-      digitalWrite(LED_PIN, 1);
-      digitalWrite(RELAY_PIN, 0);
-      Serial.println("Alexa is asking to turn OFF a device");
-      String body = 
+    digitalWrite(LED_PIN, 1);
+    digitalWrite(RELAY_PIN, 0);
+    Serial.println("Alexa is asking to turn OFF a device");
+    String body =
       "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>\r\n"
       "<u:SetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">\r\n"
       "<BinaryState>0</BinaryState>\r\n"
       "</u:SetBinaryStateResponse>\r\n"
       "</s:Body> </s:Envelope>";
-      String header = "HTTP/1.1 200 OK\r\n";
-      header += "Content-Length: ";
-      header += body.length();
-      header += "\r\n";
-      header += "Content-Type: text/xml\r\n";
-      header += "Date: ";
-      header += getDateString();
-      header += "\r\n";
-      header += "EXT:\r\n";
-      header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
-      header += "X-User-Agent: redsonic\r\n";
-      header += "\r\n";
-      header += body;
-      server.sendContent(header);
+    String header = "HTTP/1.1 200 OK\r\n";
+    header += "Content-Length: ";
+    header += body.length();
+    header += "\r\n";
+    header += "Content-Type: text/xml\r\n";
+    header += "Date: ";
+    header += getDateString();
+    header += "\r\n";
+    header += "EXT:\r\n";
+    header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
+    header += "X-User-Agent: redsonic\r\n";
+    header += "\r\n";
+    header += body;
+    server.sendContent(header);
   }
 
   else if (isQuestion) {
-      String body = 
+    String body =
       "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>\r\n"
       "<u:GetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">\r\n"
       "<BinaryState>" + String(digitalRead(12)) + "</BinaryState>\r\n"
       "</u:GetBinaryStateResponse>\r\n"
       "</s:Body> </s:Envelope>";
-      String header = "HTTP/1.1 200 OK\r\n";
-      header += "Content-Length: ";
-      header += body.length();
-      header += "\r\n";
-      header += "Content-Type: text/xml\r\n";
-      header += "Date: ";
-      header += getDateString();
-      header += "\r\n";
-      header += "EXT:\r\n";
-      header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
-      header += "X-User-Agent: redsonic\r\n";
-      header += "\r\n";
-      header += body;
-      server.sendContent(header);
+    String header = "HTTP/1.1 200 OK\r\n";
+    header += "Content-Length: ";
+    header += body.length();
+    header += "\r\n";
+    header += "Content-Type: text/xml\r\n";
+    header += "Date: ";
+    header += getDateString();
+    header += "\r\n";
+    header += "EXT:\r\n";
+    header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
+    header += "X-User-Agent: redsonic\r\n";
+    header += "\r\n";
+    header += body;
+    server.sendContent(header);
   }
 }
 
 void handleNotFound()
 {
   Serial.println("handleNotFound()");
-  
+
   String message = "File Not Found\n\n";
   message += "URI: ";
   message += server.uri();
@@ -372,7 +372,7 @@ void handleNotFound()
   message += "\nArguments: ";
   message += server.args();
   message += "\n";
-  for (uint8_t i=0; i<server.args(); i++) {
+  for (uint8_t i = 0; i < server.args(); i++) {
     message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
   }
   server.send(404, "text/plain", message);
@@ -384,7 +384,7 @@ void handleNotFound()
 
 void setupMode() {
   Serial.println("Entering SETUP mode...");
-  
+
   // setup mode indicator
   digitalWrite(LED_PIN, 0);
   delay(500);
@@ -530,7 +530,7 @@ void setup()
   Serial.print("[Connecting to ");
   Serial.print(ssid);
   Serial.print("]...");
-  int tries=0;
+  int tries = 0;
   while (WiFi.status() != WL_CONNECTED) {
     // enter setup if button is pressed while connecting
     if (digitalRead(SWITCH_PIN) == 0) setupMode();
@@ -549,7 +549,7 @@ void setup()
       break;
     }
   }
-  
+
   // print your WiFi info
   IPAddress ip = WiFi.localIP();
   Serial.println();
@@ -558,7 +558,7 @@ void setup()
   Serial.print(" with IP: ");
   Serial.println(ip);
 
-    // output config
+  // output config
   Serial.print("Friendly name: ");
   Serial.println(friendlyName);
   Serial.print("Serial number: ");
@@ -572,7 +572,7 @@ void setup()
   Serial.print(ipMulti);
   Serial.print(":");
   Serial.println(portMulti);
-  
+
   //Web Server
   server.on("/", handleRoot);
   server.on("/setup.xml", handleSetupXml);
@@ -584,33 +584,34 @@ void setup()
   Serial.println(webserverPort);
 }
 
-void loop(){
+void loop() {
 
   ESP.wdtFeed();
 
-if (digitalRead(SWITCH_PIN)){
-  delay(250);
-  if (!digitalRead(SWITCH_PIN)){
-  switchState = !switchState;
-  Serial.print("Switch Pressed - Relay now "); 
+  if (digitalRead(SWITCH_PIN)) {
+    delay(250);
+    if (!digitalRead(SWITCH_PIN)) {
+      switchState = !switchState;
+      Serial.print("Switch Pressed - Relay now ");
 
-// Show and change Relay State  
-  if (digitalRead(13)){
-    Serial.println("ON");
-      digitalWrite(LED_PIN, 0);
-      digitalWrite(RELAY_PIN, 1);  }
-    else
-    {
-    Serial.println("OFF");
-      digitalWrite(LED_PIN, 1);
-      digitalWrite(RELAY_PIN, 0);
+      // Show and change Relay State
+      if (switchState) {
+        Serial.println("ON");
+        digitalWrite(LED_PIN, 0);
+        digitalWrite(RELAY_PIN, 1);
+      }
+      else
+      {
+        Serial.println("OFF");
+        digitalWrite(LED_PIN, 1);
+        digitalWrite(RELAY_PIN, 0);
+      }
+      delay(500);
     }
-  delay(500);
   }
-}
 
-  
-UdpMulticastServerLoop();   //UDP multicast receiver
 
-server.handleClient();      //Webserver
+  UdpMulticastServerLoop();   //UDP multicast receiver
+
+  server.handleClient();      //Webserver
 }
