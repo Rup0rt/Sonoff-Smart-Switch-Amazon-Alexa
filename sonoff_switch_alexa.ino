@@ -9,10 +9,9 @@
 
 char ssid[256];                       // your network SSID (name)
 char pass[256];                       // your network password
-
-String friendlyName = "Sonoff_Switch";                        // Alexa and/or Home Assistant will use this name to identify your device
-const char* serialNumber = "321517K0201769";                  // anything will do
-const char* uuid = "914bfa3c-1de5-12v2-8728-fd8eebaf192d";    // anything will do
+char friendlyName[32];                // Alexa and/or Home Assistant will use this name to identify your device
+char serialNumber[32];                // Serial number of device (it seems alexa uses this to identify the device)
+char uuid[64];                        // UUID seems to be unique as well
 
 // Multicast declarations for discovery
 IPAddress ipMulti(239, 255, 255, 250);
@@ -27,6 +26,9 @@ const int SWITCH_PIN = 0;
 //initial switch (button) state
 int switchState = 0;
 
+// random declarations
+char *alphaNum = "abcdefghijklmnopqrstuvwxyz0123456789";
+char *numbers = "0123456789";
 
 //-----------------------------------------------------------------------
 //-----------------------------------------------------------------------
@@ -39,6 +41,23 @@ byte packetBuffer[512]; //buffer to hold incoming and outgoing packets
 //Start TCP server
 ESP8266WebServer server(webserverPort);
 
+
+//-----------------------------------------------------------------------
+// Random String Generator
+//-----------------------------------------------------------------------
+
+char* generateString(char *base, int length) {
+  char res[length+1];
+  int i;
+
+  for (i=0; i<length; i++) {
+    res[i] = base[random(0, strlen(base))];
+  }
+  
+  res[length] = 0x00;
+
+  return(res);
+}
 
 //-----------------------------------------------------------------------
 // UDP Multicast Server
@@ -200,7 +219,7 @@ void handleSetupXml()
         "</specVersion>\r\n"
         "<device>\r\n"
           "<deviceType>urn:Belkin:device:controllee:1</deviceType>\r\n"
-          "<friendlyName>" + friendlyName + "</friendlyName>\r\n"
+          "<friendlyName>" + String(friendlyName) + "</friendlyName>\r\n"
               "<manufacturer>Belkin International Inc.</manufacturer>\r\n"
               "<manufacturerURL>http://www.belkin.com</manufacturerURL>\r\n"
               "<modelDescription>Belkin Plugin Socket 1.0</modelDescription>\r\n"
@@ -397,6 +416,39 @@ void setupMode() {
     f = SPIFFS.open("/pass.txt", "w+");
     f.print(WiFi.psk().c_str());
     f.close();
+
+    // write friendly name file
+    memset(friendlyName, 0, 32);
+    strcat(friendlyName, "Sonoff ");
+    strcat(friendlyName, generateString(numbers, 3));
+    f = SPIFFS.open("/name.txt", "w+");
+    f.print(friendlyName);
+    f.close();
+
+    // write serial number
+    memset(serialNumber, 0, 32);
+    strcat(serialNumber, generateString(numbers, 6));
+    strcat(serialNumber, "K");
+    strcat(serialNumber, generateString(numbers, 7));
+    f = SPIFFS.open("/serial.txt", "w+");
+    f.print(serialNumber);
+    f.close();
+
+    // write uuid
+    memset(uuid, 0, 64);
+    strcat(uuid, generateString(alphaNum, 8));
+    strcat(uuid, "-");
+    strcat(uuid, generateString(alphaNum, 4));
+    strcat(uuid, "-");
+    strcat(uuid, generateString(alphaNum, 4));
+    strcat(uuid, "-");
+    strcat(uuid, generateString(alphaNum, 4));
+    strcat(uuid, "-");
+    strcat(uuid, generateString(alphaNum, 12));
+    f = SPIFFS.open("/uuid.txt", "w+");
+    f.print(uuid);
+    f.close();
+
   } else {
     Serial.println("FAILED...");
   }
@@ -410,8 +462,9 @@ void setup()
 {
   // Open serial communications and wait for port to open:
   Serial.begin(115200);
-  delay(100);
-  Serial.println();
+
+  // init random number generator
+  randomSeed(analogRead(0));
 
   // Initialize LED pin
   pinMode(LED_PIN, OUTPUT);
@@ -437,6 +490,33 @@ void setup()
     while (f.available()) tmp += char(f.read());
     f.close();
     tmp.toCharArray(pass, 256);
+  } else setupMode();
+
+  // read FRIENDLYNAME
+  if (SPIFFS.exists("/name.txt")) {
+    String tmp = "";
+    File f = SPIFFS.open("/name.txt", "r");
+    while (f.available()) tmp += char(f.read());
+    f.close();
+    tmp.toCharArray(friendlyName, 32);
+  } else setupMode();
+
+  // read SERIAL NUMBER
+  if (SPIFFS.exists("/serial.txt")) {
+    String tmp = "";
+    File f = SPIFFS.open("/serial.txt", "r");
+    while (f.available()) tmp += char(f.read());
+    f.close();
+    tmp.toCharArray(serialNumber, 32);
+  } else setupMode();
+
+  // read UUID
+  if (SPIFFS.exists("/uuid.txt")) {
+    String tmp = "";
+    File f = SPIFFS.open("/uuid.txt", "r");
+    while (f.available()) tmp += char(f.read());
+    f.close();
+    tmp.toCharArray(uuid, 64);
   } else setupMode();
 
   digitalWrite(LED_PIN, 1);
@@ -477,7 +557,15 @@ void setup()
   Serial.print(WiFi.SSID());
   Serial.print(" with IP: ");
   Serial.println(ip);
-  
+
+    // output config
+  Serial.print("Friendly name: ");
+  Serial.println(friendlyName);
+  Serial.print("Serial number: ");
+  Serial.println(serialNumber);
+  Serial.print("UUID: ");
+  Serial.println(uuid);
+
   //UDP Server
   Udp.beginMulticast(WiFi.localIP(),  ipMulti, portMulti);
   Serial.print("Udp multicast server started at ");
@@ -519,7 +607,7 @@ if (digitalRead(SWITCH_PIN)){
     }
   delay(500);
   }
-  }
+}
 
   
 UdpMulticastServerLoop();   //UDP multicast receiver
