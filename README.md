@@ -6,6 +6,7 @@ Tested with german version.
 IMPORTANT: Newer versions of SONOFF devices, need flash mode DOUT in arduino IDE !!!
 
 BLINK CODES:
+============
 * 2x long ON ==> SETUP MODE
    - LED goes ON ==> WPS DETECTION IN PROGRESS
    - LED goes OFF ==> WPS DETECTION FINISHED (you may restart the device manually the first time)
