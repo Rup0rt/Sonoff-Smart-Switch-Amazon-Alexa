@@ -21,7 +21,7 @@ Sonoff WIFI Smart Switch
 SONOFF TH16:
 ============
 
-This device has a variable target temperature that is important when the current temperature is above or below this value. It can be changed on the internal webserver, that is reachable at http://<IP>:49153 and looks like this:
+This device has a variable target temperature that is important when the current temperature is above or below this value. It can be changed on the internal webserver, that is reachable at http://[IP]:49153 and looks like this:
    
 Tell Alexa to discover devices
 
