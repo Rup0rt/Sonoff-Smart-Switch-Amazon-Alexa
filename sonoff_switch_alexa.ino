@@ -113,6 +113,9 @@ void UdpMulticastServerLoop()
   if (numBytes <= 0)
     return;
 
+  Serial.print("GOT UDP Packet bytes: ");
+  Serial.println(numBytes);
+
   IPAddress senderIP = Udp.remoteIP();
   unsigned int senderPort = Udp.remotePort();
 
@@ -285,7 +288,33 @@ void handleUpnpControl()
   }
 
   //On/Off Logic
-  if (isOn) {
+
+  // handle question first, because otherwise it will switch the device
+
+  if (isQuestion) {
+    Serial.println("Alexa is asking for device state");
+    String body =
+      "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>\r\n"
+      "<u:GetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">\r\n"
+      "<BinaryState>" + String(digitalRead(RELAY_PIN)) + "</BinaryState>\r\n"
+      "</u:GetBinaryStateResponse>\r\n"
+      "</s:Body> </s:Envelope>";
+    String header = "HTTP/1.1 200 OK\r\n";
+    header += "Content-Length: ";
+    header += body.length();
+    header += "\r\n";
+    header += "Content-Type: text/xml\r\n";
+    header += "Date: ";
+    header += getDateString();
+    header += "\r\n";
+    header += "EXT:\r\n";
+    header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
+    header += "X-User-Agent: redsonic\r\n";
+    header += "\r\n";
+    header += body;
+    server.sendContent(header);
+  }
+  else if (isOn) {
     digitalWrite(LED_PIN, 0);
     digitalWrite(RELAY_PIN, 1);
     Serial.println("Alexa is asking to turn ON a device");
@@ -336,28 +365,6 @@ void handleUpnpControl()
     server.sendContent(header);
   }
 
-  else if (isQuestion) {
-    String body =
-      "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><s:Body>\r\n"
-      "<u:GetBinaryStateResponse xmlns:u=\"urn:Belkin:service:basicevent:1\">\r\n"
-      "<BinaryState>" + String(digitalRead(12)) + "</BinaryState>\r\n"
-      "</u:GetBinaryStateResponse>\r\n"
-      "</s:Body> </s:Envelope>";
-    String header = "HTTP/1.1 200 OK\r\n";
-    header += "Content-Length: ";
-    header += body.length();
-    header += "\r\n";
-    header += "Content-Type: text/xml\r\n";
-    header += "Date: ";
-    header += getDateString();
-    header += "\r\n";
-    header += "EXT:\r\n";
-    header += "SERVER: Linux/2.6.21, UPnP/1.0, Portable SDK for UPnP devices/1.6.18\r\n";
-    header += "X-User-Agent: redsonic\r\n";
-    header += "\r\n";
-    header += body;
-    server.sendContent(header);
-  }
 }
 
 void handleNotFound()
@@ -403,6 +410,10 @@ void setupMode() {
   Serial.println("Trying to get WPS network...");
   WiFi.mode(WIFI_STA);
   bool wpsSuccess = WiFi.beginWPSConfig();
+  Serial.print("WPS configuration ");
+  if (wpsSuccess) Serial.println("SUCESSFUL!");
+  else Serial.println("FAILED!");
+
   digitalWrite(LED_PIN, 1);
   if (WiFi.SSID().length() > 0) {
     Serial.println("SUCCESS - writing data to SPIFFS...");
@@ -584,6 +595,18 @@ void setup()
   Serial.println(webserverPort);
 }
 
+void switchOn() {
+  Serial.println("ON");
+  digitalWrite(LED_PIN, 0);
+  digitalWrite(RELAY_PIN, 1);
+}
+
+void switchOff() {
+  Serial.println("OFF");
+  digitalWrite(LED_PIN, 1);
+  digitalWrite(RELAY_PIN, 0);
+}
+
 void loop() {
 
   ESP.wdtFeed();
@@ -596,15 +619,11 @@ void loop() {
 
       // Show and change Relay State
       if (switchState) {
-        Serial.println("ON");
-        digitalWrite(LED_PIN, 0);
-        digitalWrite(RELAY_PIN, 1);
+        switchOn();
       }
       else
       {
-        Serial.println("OFF");
-        digitalWrite(LED_PIN, 1);
-        digitalWrite(RELAY_PIN, 0);
+        switchOff();
       }
       delay(500);
     }
