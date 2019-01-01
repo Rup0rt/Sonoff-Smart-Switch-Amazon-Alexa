@@ -47,7 +47,7 @@ float lastHum = 0;
 //int status = WL_IDLE_STATUS;
 
 WiFiUDP Udp;
-byte packetBuffer[512]; //buffer to hold incoming and outgoing packets
+byte packetBuffer[1500]; //buffer to hold incoming and outgoing packets
 
 //Start TCP server
 ESP8266WebServer server(webserverPort);
@@ -121,8 +121,14 @@ void responseToSearchUdp(IPAddress& senderIP, unsigned int senderPort)
 void UdpMulticastServerLoop()
 {
   int numBytes = Udp.parsePacket();
-  if (numBytes <= 0)
+  if (numBytes <= 0) {
     return;
+  }
+
+  if (numBytes > 1500) {
+    Serial.println("UDP packet too large (1500), skipping...");
+    return;
+  }
 
   IPAddress senderIP = Udp.remoteIP();
   unsigned int senderPort = Udp.remotePort();
