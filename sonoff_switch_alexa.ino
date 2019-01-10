@@ -1,11 +1,14 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <ESP8266httpUpdate.h>
 #include <WiFiUDP.h>
 #include <FS.h>
 
+// Majority of code is from aneisch
 // https://github.com/aneisch/Sonoff-Wemo-Home-Assistant
 
-//Majority of code is from a
+// VERSION
+#define VERSION "SWITCH-1.1"
 
 char ssid[256];                       // your network SSID (name)
 char pass[256];                       // your network password
@@ -472,6 +475,29 @@ void setupMode() {
   ESP.restart();
 }
 
+void checkUpdate() {
+  Serial.println("Checking for update...");
+  t_httpUpdate_return ret = ESPhttpUpdate.update("f00l.de", 80, "/sonoff/update.php", VERSION);
+// since server certificate is let's encrypt it updates too frequently to support https update :(
+//  t_httpUpdate_return ret = ESPhttpUpdate.update("f00l.de", 443, "/sonoff/update.php", VERSION, "6cd59760427202849597c58e194705b2bcd77c04");
+
+  switch (ret) {
+    case HTTP_UPDATE_FAILED:
+      Serial.printf("UPDATE FAILED: Error (%d): %s", ESPhttpUpdate.getLastError(), ESPhttpUpdate.getLastErrorString().c_str());
+      Serial.println();
+      break;
+
+    case HTTP_UPDATE_NO_UPDATES:
+      Serial.println("NO UPDATES available...");
+      break;
+
+    case HTTP_UPDATE_OK:
+      Serial.println("UPDATE SUCCESSFUL!");
+      break;
+  }
+
+}
+
 void setup()
 {
   // Open serial communications and wait for port to open:
@@ -571,6 +597,9 @@ void setup()
   Serial.print(WiFi.SSID());
   Serial.print(" with IP: ");
   Serial.println(ip);
+
+  // check for update
+  checkUpdate();
 
   // output config
   Serial.print("Friendly name: ");
